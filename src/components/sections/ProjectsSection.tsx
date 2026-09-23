@@ -1,12 +1,48 @@
 ﻿'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import type { Project } from '@/lib/portfolioStore';
 
-export default function ProjectsSection({ projects }: { projects: Project[] }) {
+export default function ProjectsSection({ projects = [] }: { projects: Project[] }) {
+  const [projectList, setProjectList] = useState<Project[]>(projects);
+
+  useEffect(() => {
+    // Keep in sync with initial props
+    if (projects && projects.length > 0) {
+      setProjectList(projects);
+    }
+
+    // Also fetch fresh projects from API
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch('/api/projects', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setProjectList(data);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch latest projects:', err);
+      }
+    };
+
+    fetchLatest();
+
+    // Listen for real-time admin updates in same browser session
+    const handleStorageUpdate = () => fetchLatest();
+    window.addEventListener('storage', handleStorageUpdate);
+    window.addEventListener('portfolio_updated', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageUpdate);
+      window.removeEventListener('portfolio_updated', handleStorageUpdate);
+    };
+  }, [projects]);
+
   return (
     <section id="projects" className="py-24 bg-[#fdfdfd] relative z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,9 +59,9 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
           </p>
         </div>
 
-        {/* Exact Projects Grid from Reel (detail_17s.jpg / project_crop.jpg) */}
+        {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12 items-start">
-          {projects.map((project, idx) => (
+          {projectList.map((project, idx) => (
             <motion.div
               key={project.id || idx}
               initial={{ opacity: 0, y: 20 }}
@@ -34,9 +70,9 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               className="flex flex-col group cursor-pointer"
             >
-              {/* Image Frame: Capsule Rounded Container with Outer Border (Exact from Reel) */}
+              {/* Project Image Card */}
               <a
-                href={project.liveUrl || project.githubUrl}
+                href={project.liveUrl || project.githubUrl || '#'}
                 target="_blank"
                 rel="noreferrer"
                 className="relative block w-full rounded-[38px] p-2 bg-slate-100 border-[2.5px] border-slate-300 hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-xl group-hover:scale-[1.01]"
@@ -50,7 +86,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
 
-                  {/* Circular Center Hover Arrow Button (Directly from Reel) */}
+                  {/* Circular Center Hover Arrow Button */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="w-12 h-12 rounded-full bg-white/95 text-slate-900 shadow-2xl border border-slate-200 flex items-center justify-center opacity-85 group-hover:opacity-100 group-hover:scale-115 transition-all">
                       <ArrowUpRight className="w-5 h-5 stroke-[2.5]" />
@@ -59,65 +95,64 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                 </div>
               </a>
 
-              {/* Text Content Directly Below Image on Clean Canvas */}
-              <div className="pt-5 px-2">
-                {/* Subtitle / Category from Reel */}
-                <span className="text-[11px] font-mono tracking-wider uppercase text-zinc-400 font-semibold block mb-1">
-                  {project.category || (project.languages?.[0] ? `${project.languages[0]} PLATFORM` : 'WEB APPLICATION')}
-                </span>
-
-                {/* Title */}
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors tracking-tight">
-                  <a href={project.liveUrl || project.githubUrl} target="_blank" rel="noreferrer">
+              {/* Title & Metadata */}
+              <div className="mt-5 flex flex-col">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
                     {project.title}
-                  </a>
-                </h3>
-
-                {/* Description */}
-                <p className="mt-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                  {project.description}
-                </p>
-
-                {/* Tech stack row (Clean, spaced out format from Reel) */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs font-mono text-slate-500 font-medium">
-                  {project.languages?.map((l, lIdx) => (
-                    <span key={lIdx} className="hover:text-slate-900 transition-colors">
-                      {l}
-                    </span>
-                  ))}
-                  {project.frameworks?.map((f, fIdx) => (
-                    <span key={fIdx} className="hover:text-slate-900 transition-colors">
-                      {f}
-                    </span>
-                  ))}
+                  </h3>
                   {project.database && (
-                    <span className="hover:text-slate-900 transition-colors text-emerald-700 font-bold">
+                    <span className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 shrink-0">
                       {project.database}
                     </span>
                   )}
                 </div>
 
-                {/* Direct GitHub and Demo links */}
-                <div className="mt-5 flex items-center gap-4 text-xs font-mono">
-                  {project.githubUrl && (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-slate-900 font-bold hover:text-emerald-600 hover:underline flex items-center gap-1"
+                <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                  {project.description}
+                </p>
+
+                {/* Tech Stack Pills */}
+                <div className="mt-4 flex flex-wrap gap-1.5 items-center">
+                  {(project.languages || []).map((lang, lIdx) => (
+                    <span
+                      key={lIdx}
+                      className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200"
                     >
-                      <span>GitHub Repo</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                      {lang}
+                    </span>
+                  ))}
+                  {(project.frameworks || []).map((fw, fIdx) => (
+                    <span
+                      key={fIdx}
+                      className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200"
+                    >
+                      {fw}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Action Links */}
+                <div className="mt-5 flex items-center gap-4 text-xs font-bold font-mono">
                   {project.liveUrl && (
                     <a
                       href={project.liveUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-emerald-700 font-bold hover:underline flex items-center gap-1"
+                      className="text-emerald-700 hover:text-emerald-900 underline flex items-center gap-1"
                     >
-                      <span>Live Site</span>
+                      <span>Live Preview</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-slate-700 hover:text-slate-950 underline flex items-center gap-1"
+                    >
+                      <span>GitHub Code</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />
                     </a>
                   )}
@@ -130,4 +165,3 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
     </section>
   );
 }
-

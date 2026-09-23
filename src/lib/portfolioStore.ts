@@ -1,5 +1,6 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
+import rawInitialData from '@/data/portfolio-data.json';
 
 const bundledFilePath = path.join(process.cwd(), 'src', 'data', 'portfolio-data.json');
 const tmpFilePath = process.platform === 'win32'
@@ -86,9 +87,11 @@ export interface PortfolioData {
 }
 
 function sanitizeData(data: any): PortfolioData {
-  if (!data.educationList && data.education) {
-    const oldEdu = data.education;
-    data.educationList = [
+  if (!data) return rawInitialData as unknown as PortfolioData;
+  const cloned = JSON.parse(JSON.stringify(data));
+  if (!cloned.educationList && cloned.education) {
+    const oldEdu = cloned.education;
+    cloned.educationList = [
       {
         id: 'edu-mca',
         level: 'MCA',
@@ -100,16 +103,19 @@ function sanitizeData(data: any): PortfolioData {
       },
     ];
   }
-  if (!data.profile.avatar3d) {
-    data.profile.avatar3d = '/avatar_3d_cutout.png';
+  if (!cloned.profile) {
+    cloned.profile = (rawInitialData as any).profile || {};
   }
-  if (!data.profile.whatsapp) {
-    data.profile.whatsapp = '+919876543210';
+  if (!cloned.profile.avatar3d) {
+    cloned.profile.avatar3d = '/avatar_3d_cutout.png';
   }
-  if (!data.profile.instagram) {
-    data.profile.instagram = 'https://instagram.com';
+  if (!cloned.profile.whatsapp) {
+    cloned.profile.whatsapp = '+919876543210';
   }
-  return data as PortfolioData;
+  if (!cloned.profile.instagram) {
+    cloned.profile.instagram = 'https://instagram.com';
+  }
+  return cloned as PortfolioData;
 }
 
 export function getPortfolioData(): PortfolioData {
@@ -117,36 +123,34 @@ export function getPortfolioData(): PortfolioData {
     return memoryCache;
   }
 
-  // 1. Try reading from writable serverless /tmp path first
-  if (fs.existsSync(tmpFilePath)) {
-    try {
+  // 1. Try reading from writable serverless /tmp path first (if written during runtime)
+  try {
+    if (fs.existsSync(tmpFilePath)) {
       const raw = fs.readFileSync(tmpFilePath, 'utf8');
       const data = JSON.parse(raw);
       memoryCache = sanitizeData(data);
       return memoryCache;
-    } catch (e) {
-      console.warn('Could not read from tmpFilePath:', e);
     }
+  } catch (e) {
+    console.warn('Could not read from tmpFilePath:', e);
   }
 
-  // 2. Read from bundled source data file
+  // 2. Try reading from bundled file path on disk (works locally)
   try {
     if (fs.existsSync(bundledFilePath)) {
       const raw = fs.readFileSync(bundledFilePath, 'utf8');
       const data = JSON.parse(raw);
       memoryCache = sanitizeData(data);
-      // Seed /tmp
       try {
         fs.writeFileSync(tmpFilePath, JSON.stringify(memoryCache, null, 2), 'utf8');
       } catch {}
       return memoryCache;
     }
-  } catch (error) {
-    console.error('Error reading portfolio data:', error);
-    throw error;
-  }
+  } catch {}
 
-  throw new Error(`Data file not found at ${bundledFilePath}`);
+  // 3. Fallback to imported data from module bundle (NEVER FAILS ON VERCEL)
+  memoryCache = sanitizeData(rawInitialData);
+  return memoryCache;
 }
 
 export function savePortfolioData(data: PortfolioData): void {
@@ -164,11 +168,11 @@ export function savePortfolioData(data: PortfolioData): void {
   try {
     fs.writeFileSync(bundledFilePath, JSON.stringify(data, null, 2), 'utf8');
   } catch {
-    // Normal on Vercel serverless read-only filesystem
+    // Expected on Vercel serverless read-only filesystem
     console.log('Running on serverless/read-only environment. Data saved to /tmp and memory.');
   }
 
-  // 3. Trigger optional GitHub sync if GITHUB_TOKEN is configured in Vercel
+  // 3. Trigger GitHub sync if token is available
   syncToGitHub(data).catch((e) => console.warn('Background GitHub sync:', e));
 }
 

@@ -116,6 +116,10 @@ export default function AdminPage() {
   const showNotification = (msg: string) => {
     setSaveStatus(msg);
     setTimeout(() => setSaveStatus(null), 3500);
+    try {
+      window.dispatchEvent(new Event('portfolio_updated'));
+      localStorage.setItem('portfolio_last_updated', Date.now().toString());
+    } catch {}
   };
 
   // File Upload State & Refs for Folder-based browsing
@@ -1638,4 +1642,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
 
