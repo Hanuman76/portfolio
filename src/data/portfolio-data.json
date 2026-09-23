@@ -1,0 +1,248 @@
+{
+  "profile": {
+    "name": "Devraj Ancheriya",
+    "title": "Full-Stack Developer ",
+    "tagline": "Building production-ready web apps for small businesses & modern enterprises.",
+    "bio": "Master of Computer Applications (MCA) scholar with a deep passion for modern full-stack web development, Python, PHP, Next.js, and scalable cloud systems. Strong foundation in BCA and software engineering.",
+    "avatar": "/uploads/passport_1790157245863.jpeg",
+    "avatar3d": "/avatar_3d_cutout.png",
+    "resumeUrl": "/resume.pdf",
+    "email": "devrajancheriya706@gmail.com",
+    "phone": "+91 6353639767",
+    "whatsapp": "+916353639767",
+    "instagram": "https://instagram.com/ancheriya_devraj",
+    "github": "https://github.com/Hanuman76",
+    "location": "India",
+    "statusBadge": "Available for work",
+    "heroGreeting": "Hi, I'm",
+    "techBadgeText": "Building production-ready web apps",
+    "codeStatus": "Building & Learning",
+    "codeRole": "",
+    "codeVibe": "Clean code & Chai",
+    "nowPlaying": "Lofi Hip Hop Radio - Beats to relax/study to",
+    "storyHeading": "Turning imagination into interactive reality.",
+    "storyP1": "I'm a web developer who builds production-ready web apps for small businesses and modern organizations — mostly using Next.js, Python, and PHP since it gives great performance out of the box while handling backend-facing architectures seamlessly.",
+    "storyP2": "I move fast from planning and systems architecture to shipping real features like safari booking platforms, automated WhatsApp notifications, and real-time database management systems.",
+    "storyP3": "Postgraduate Scholar pursuing Master of Computer Applications (MCA) with Bachelor of Computer Applications (BCA) foundation."
+  },
+  "educationList": [
+    {
+      "id": "edu-1",
+      "level": "MCA",
+      "degree": "Master of Computer Applications (MCA)",
+      "institution": "Apex Institute of Science & Technology",
+      "year": "2024 - 2026",
+      "score": "8.8 CGPA (Pursuing / First Class)",
+      "highlights": [
+        "Advanced Data Structures & Algorithms",
+        "Full-Stack Cloud Architectures & Distributed Systems",
+        "Modern Web Technologies & Reactive Frameworks",
+        "Advanced DBMS & Query Optimization"
+      ]
+    },
+    {
+      "id": "edu-2",
+      "level": "BCA",
+      "degree": "Bachelor of Computer Applications (BCA)",
+      "institution": "University School of Information Technology",
+      "year": "2021 - 2024",
+      "score": "8.5 CGPA (First Class with Distinction)",
+      "highlights": [
+        "Object Oriented Programming (C++, Java)",
+        "Database Management Systems (MySQL, Oracle)",
+        "Web Design Fundamentals (HTML, CSS, JS, PHP)",
+        "Operating Systems & Computer Networks"
+      ]
+    },
+    {
+      "id": "edu-3",
+      "level": "12th Standard",
+      "degree": "Senior Secondary Certificate (Class XII)",
+      "institution": "Government Model Senior Secondary School",
+      "year": "2020 - 2021",
+      "score": "86.4%",
+      "highlights": [
+        "Physics, Chemistry, and Mathematics (PCM)",
+        "Computer Science (Python & SQL foundations)"
+      ]
+    },
+    {
+      "id": "edu-4",
+      "level": "10th Standard",
+      "degree": "Secondary School Certificate (Class X)",
+      "institution": "Kendriya Vidyalaya / Central School",
+      "year": "2018 - 2019",
+      "score": "89.2%",
+      "highlights": [
+        "Mathematics & Science Honors",
+        "Information Technology Fundamentals"
+      ]
+    },
+    {
+      "id": "edu-5",
+      "level": "Certification",
+      "degree": "Full-Stack Web Specialization",
+      "institution": "Meta / Coursera & FreeCodeCamp",
+      "year": "2024",
+      "score": "Verified Credential",
+      "highlights": [
+        "Modern React & Next.js Architecture",
+        "RESTful API & Microservices Engineering",
+        "Full-Stack Database Architecture"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "name": "Next.js",
+      "level": 92,
+      "category": "Frontend"
+    },
+    {
+      "name": "React & TypeScript",
+      "level": 95,
+      "category": "Frontend"
+    },
+    {
+      "name": "Python & FastAPI",
+      "level": 88,
+      "category": "Backend"
+    },
+    {
+      "name": "PHP & Laravel",
+      "level": 84,
+      "category": "Backend"
+    },
+    {
+      "name": "Tailwind CSS",
+      "level": 94,
+      "category": "Frontend"
+    },
+    {
+      "name": "Node.js & Express",
+      "level": 86,
+      "category": "Backend"
+    },
+    {
+      "name": "MySQL & PostgreSQL",
+      "level": 88,
+      "category": "Database"
+    },
+    {
+      "name": "MongoDB & Supabase",
+      "level": 85,
+      "category": "Database"
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-1",
+      "title": "Framed by Varun (FBV)",
+      "category": "WEDDING PHOTOGRAPHY PORTFOLIO",
+      "description": "A wedding photography portfolio website built for a photography studio, designed to showcase their work and drive client inquiries.",
+      "githubUrl": "https://github.com/DevrajAncheriya/framed-by-varun",
+      "liveUrl": "https://framedbyvarun.com",
+      "image": "/project_fbv.jpg",
+      "languages": [
+        "Next.js",
+        "React",
+        "Tailwind CSS",
+        "Framer Motion"
+      ],
+      "frameworks": [
+        "Next.js",
+        "Framer Motion"
+      ],
+      "database": "Vercel Edge",
+      "tags": [
+        "Next.js",
+        "React",
+        "Tailwind CSS"
+      ],
+      "featured": true
+    },
+    {
+      "id": "proj-2",
+      "title": "Corbett Wildlife",
+      "category": "SAFARI BOOKING PLATFORM",
+      "description": "A full stack Jim Corbett safari booking platform with live backend, Supabase database, booking forms and Twilio-powered WhatsApp notifications.",
+      "githubUrl": "https://github.com/DevrajAncheriya/corbett-wildlife-safari",
+      "liveUrl": "https://corbettwildlife.org",
+      "image": "/project_corbett.jpg",
+      "languages": [
+        "Next.js",
+        "TypeScript",
+        "Tailwind"
+      ],
+      "frameworks": [
+        "Next.js",
+        "Twilio WhatsApp"
+      ],
+      "database": "Supabase PostgreSQL",
+      "tags": [
+        "Next.js",
+        "TypeScript",
+        "Supabase"
+      ],
+      "featured": true
+    },
+    {
+      "id": "proj-3",
+      "title": "AI Healthcare Intelligence Engine",
+      "category": "PYTHON & DATA ANALYTICS",
+      "description": "High-throughput diagnostic analytics system processing clinical records with automated health prediction models and RESTful API endpoints.",
+      "githubUrl": "https://github.com/DevrajAncheriya/ai-health-analytics",
+      "liveUrl": "https://health-analytics.dev",
+      "image": "/project_python.jpg",
+      "languages": [
+        "Python",
+        "FastAPI",
+        "React"
+      ],
+      "frameworks": [
+        "FastAPI",
+        "Pandas",
+        "Scikit-Learn"
+      ],
+      "database": "PostgreSQL & Redis",
+      "tags": [
+        "Python",
+        "FastAPI",
+        "PostgreSQL"
+      ],
+      "featured": true
+    },
+    {
+      "id": "proj-4",
+      "title": "Enterprise Inventory & Billing Portal",
+      "category": "PHP & MYSQL COMMERCE ENGINE",
+      "description": "Complete warehouse inventory management and automated tax invoicing platform built with robust PHP and optimized MySQL relational queries.",
+      "githubUrl": "https://github.com/DevrajAncheriya/inventory-billing-system",
+      "liveUrl": "https://inventory-portal.dev",
+      "image": "/project_php.jpg",
+      "languages": [
+        "PHP",
+        "JavaScript",
+        "Bootstrap"
+      ],
+      "frameworks": [
+        "Laravel / Core PHP",
+        "REST API"
+      ],
+      "database": "MySQL Database",
+      "tags": [
+        "PHP",
+        "MySQL",
+        "Laravel"
+      ],
+      "featured": true
+    }
+  ],
+  "theme": {
+    "bgColor": "#ffffff",
+    "accentColor": "#10b981",
+    "textColor": "#0f172a",
+    "glowColor": "#10b98166",
+    "preset": "emerald"
+  }
+}
