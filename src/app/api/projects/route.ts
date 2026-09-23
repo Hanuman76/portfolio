@@ -1,10 +1,18 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getPortfolioData, savePortfolioData, Project } from '@/lib/portfolioStore';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
     const data = getPortfolioData();
-    return NextResponse.json(data.projects);
+    return NextResponse.json(data.projects, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
@@ -38,9 +46,15 @@ export async function POST(request: Request) {
     data.projects.unshift(newProject);
     savePortfolioData(data);
 
+    try {
+      revalidatePath('/');
+      revalidatePath('/admin');
+    } catch {}
+
     return NextResponse.json({ success: true, project: newProject }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+  } catch (err: any) {
+    console.error('POST /api/projects error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to create project' }, { status: 500 });
   }
 }
 
@@ -79,9 +93,16 @@ export async function PUT(request: Request) {
     };
 
     savePortfolioData(data);
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/admin');
+    } catch {}
+
     return NextResponse.json({ success: true, project: data.projects[index] });
-  } catch {
-    return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
+  } catch (err: any) {
+    console.error('PUT /api/projects error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to update project' }, { status: 500 });
   }
 }
 
@@ -103,8 +124,15 @@ export async function DELETE(request: Request) {
     }
 
     savePortfolioData(data);
-    return NextResponse.json({ success: true, message: 'Project deleted' });
-  } catch {
-    return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/admin');
+    } catch {}
+
+    return NextResponse.json({ success: true, message: 'Project deleted successfully' });
+  } catch (err: any) {
+    console.error('DELETE /api/projects error:', err);
+    return NextResponse.json({ error: err?.message || 'Failed to delete project' }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -46,6 +46,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                     src={project.image || '/project_fbv.jpg'}
                     alt={project.title}
                     fill
+                    unoptimized
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
 
@@ -129,3 +130,4 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
     </section>
   );
 }
+

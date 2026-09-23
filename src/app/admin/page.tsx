@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -221,14 +221,18 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      const resJson = await res.json().catch(() => ({}));
 
       if (res.ok) {
         setIsEditingProject(false);
         await loadData();
         showNotification('Project details & GitHub links saved successfully!');
+      } else {
+        alert(resJson.error || 'Failed to save project.');
       }
     } catch (err) {
       console.error('Error saving project:', err);
+      alert('Error saving project.');
     }
   };
 
@@ -236,12 +240,16 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this project?')) return;
     try {
       const res = await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
+      const resJson = await res.json().catch(() => ({}));
       if (res.ok) {
         await loadData();
         showNotification('Project successfully deleted!');
+      } else {
+        alert(resJson.error || 'Failed to delete project.');
       }
     } catch (err) {
       console.error('Error deleting project:', err);
+      alert('Error deleting project.');
     }
   };
 
@@ -991,7 +999,7 @@ export default function AdminPage() {
                           ) : (
                             <>
                               <FolderOpen className="w-4 h-4" />
-                              <span>📁 Choose Photo from Folder</span>
+                              <span>ðŸ“ Choose Photo from Folder</span>
                             </>
                           )}
                         </button>
@@ -1077,7 +1085,7 @@ export default function AdminPage() {
                           ) : (
                             <>
                               <FolderOpen className="w-4 h-4" />
-                              <span>📁 Choose Cutout from Folder</span>
+                              <span>ðŸ“ Choose Cutout from Folder</span>
                             </>
                           )}
                         </button>
@@ -1467,7 +1475,7 @@ export default function AdminPage() {
                       ) : (
                         <>
                           <FolderOpen className="w-3.5 h-3.5 text-orange-600" />
-                          <span>📁 Choose from Folder</span>
+                          <span>ðŸ“ Choose from Folder</span>
                         </>
                       )}
                     </button>
@@ -1630,3 +1638,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
