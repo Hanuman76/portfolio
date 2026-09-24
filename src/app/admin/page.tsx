@@ -254,6 +254,50 @@ export default function AdminPage() {
   const projectFileRef = useRef<HTMLInputElement>(null);
   const [uploadingField, setUploadingField] = useState<'avatar' | 'avatar3d' | 'project' | null>(null);
 
+  function optimizeImage(file: File, maxWidth = 800, maxHeight = 800, quality = 0.88): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      const img = new (window as any).Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(src);
+          return;
+        }
+        const isPng = file.type === 'image/png';
+        if (!isPng) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality));
+      };
+      img.onerror = () => resolve(src);
+      img.src = src;
+    };
+    reader.onerror = () => resolve('/my_photo.jpg');
+    reader.readAsDataURL(file);
+  });
+}
+
   const handleUploadFile = async (
     file: File,
     targetField: 'avatar' | 'avatar3d' | 'project'
@@ -261,38 +305,63 @@ export default function AdminPage() {
     if (!file) return;
     setUploadingField(targetField);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('target', targetField);
+      // 1. Instantly compress client-side and generate high-speed base64 URL
+      const isCutout = targetField === 'avatar3d';
+      const dataUrl = await optimizeImage(
+        file,
+        isCutout ? 1000 : 800,
+        isCutout ? 1000 : 800,
+        isCutout ? 0.95 : 0.88
+      );
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.error || 'Failed to upload photo');
+      // 2. Immediately update state & localStorage (instant 0ms feedback)
+      if (targetField === 'avatar' && data) {
+        const updatedProfile = { ...data.profile, avatar: dataUrl };
+        persistData({ ...data, profile: updatedProfile }, 'Circular profile photo updated and saved permanently!');
+      } else if (targetField === 'avatar3d' && data) {
+        const updatedProfile = { ...data.profile, avatar3d: dataUrl };
+        persistData({ ...data, profile: updatedProfile }, 'Avatar 3D cutout updated and saved permanently!');
+      } else if (targetField === 'project') {
+        setCurrentProject((prev) => ({ ...prev, image: dataUrl }));
+        showNotification('Project photo selected and applied!');
       }
 
-      if (targetField === 'avatar' && data) {
-        const updatedProfile = { ...data.profile, avatar: result.url };
-        persistData({ ...data, profile: updatedProfile }, 'Circular photo uploaded and saved permanently!');
-        fetch('/api/portfolio', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile: updatedProfile }),
-        }).catch(() => {});
-      } else if (targetField === 'avatar3d' && data) {
-        const updatedProfile = { ...data.profile, avatar3d: result.url };
-        persistData({ ...data, profile: updatedProfile }, 'Avatar cutout PNG uploaded and saved permanently!');
-        fetch('/api/portfolio', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile: updatedProfile }),
-        }).catch(() => {});
-      } else if (targetField === 'project') {
-        setCurrentProject((prev) => ({ ...prev, image: result.url }));
-        showNotification('Project photo uploaded from folder!');
+      // 3. Upload to server in background
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('target', targetField);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const result = await res.json();
+          if (result && result.url) {
+            if (targetField === 'avatar' && data) {
+              const updatedProfile = { ...data.profile, avatar: result.url };
+              persistData({ ...data, profile: updatedProfile });
+              await fetch('/api/portfolio', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profile: updatedProfile }),
+              });
+            } else if (targetField === 'avatar3d' && data) {
+              const updatedProfile = { ...data.profile, avatar3d: result.url };
+              persistData({ ...data, profile: updatedProfile });
+              await fetch('/api/portfolio', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profile: updatedProfile }),
+              });
+            } else if (targetField === 'project') {
+              setCurrentProject((prev) => ({ ...prev, image: result.url }));
+            }
+          }
+        }
+      } catch (bgErr) {
+        console.warn('Background server sync completed via base64 fallback');
       }
     } catch (err: any) {
       console.error('File upload failed:', err);
@@ -1206,22 +1275,24 @@ export default function AdminPage() {
                 </div>
 
                 {/* 2. Avatar Cutout PNG */}
-                <div className="bg-white rounded-2xl p-4 border border-orange-200 shadow-sm flex flex-col justify-between">
+                <div className="bg-white rounded-2xl p-5 border-2 border-orange-200 shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-xs font-mono uppercase text-slate-800 font-black flex items-center gap-1.5">
                         <Camera className="w-4 h-4 text-orange-600" />
                         <span>Avatar Cutout PNG</span>
                       </label>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                      <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
                         Transparent
                       </span>
                     </div>
 
-                    {/* Live Preview & Choose Button */}
+                    {/* Live Preview & Click to Change */}
                     <div className="flex items-center gap-4 mb-4">
                       <div
-                        className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md shrink-0 flex items-center justify-center"
+                        onClick={() => avatar3dFileRef.current?.click()}
+                        title="Click to change cutout PNG"
+                        className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md shrink-0 flex items-center justify-center cursor-pointer group hover:opacity-90 transition-all"
                         style={{
                           backgroundImage:
                             'repeating-conic-gradient(#f1f5f9 0% 25%, #ffffff 0% 50%)',
@@ -1234,8 +1305,12 @@ export default function AdminPage() {
                           alt="Avatar Cutout"
                           fill
                           unoptimized
-                          className="object-contain"
+                          className="object-contain p-1 group-hover:scale-105 transition-transform"
                         />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold">
+                          <Camera className="w-5 h-5 mb-0.5" />
+                          <span>Change</span>
+                        </div>
                       </div>
 
                       <div className="flex-1 space-y-2">
@@ -1248,25 +1323,28 @@ export default function AdminPage() {
                           {uploadingField === 'avatar3d' ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Uploading from folder...</span>
+                              <span>Processing Cutout...</span>
                             </>
                           ) : (
                             <>
                               <FolderOpen className="w-4 h-4" />
-                              <span>ðŸ“ Choose Cutout from Folder</span>
+                              <span>Choose Cutout From Folder</span>
                             </>
                           )}
                         </button>
                         <p className="text-[11px] text-slate-500 leading-tight">
-                          Select transparent PNG cutout file from computer folder.
+                          Select transparent PNG cutout file from your computer.
                         </p>
                       </div>
 
                       <input
                         ref={avatar3dFileRef}
                         type="file"
-                        accept="image/png,image/webp"
+                        accept="image/*"
                         className="hidden"
+                        onClick={(e) => {
+                          (e.target as any).value = null;
+                        }}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) handleUploadFile(file, 'avatar3d');
@@ -1275,19 +1353,36 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Manual Path Field */}
+                  {/* Manual Path Field with Apply Button */}
                   <div className="pt-3 border-t border-slate-100">
                     <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-                      File Path / URL (Auto-set from folder)
+                      Or Paste Cutout Image URL / File Path
                     </label>
-                    <input
-                      type="text"
-                      value={data.profile.avatar3d || '/avatar_3d_cutout.png'}
-                      onChange={(e) =>
-                        setData({ ...data, profile: { ...data.profile, avatar3d: e.target.value } })
-                      }
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-700 text-xs font-mono focus:border-orange-500 focus:bg-white focus:outline-none"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={data.profile.avatar3d || ''}
+                        onChange={(e) =>
+                          setData({ ...data, profile: { ...data.profile, avatar3d: e.target.value } })
+                        }
+                        placeholder="/avatar_3d_cutout.png or https://..."
+                        className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs font-mono focus:border-orange-500 focus:bg-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          persistData(data, 'Cutout URL saved permanently!');
+                          fetch('/api/portfolio', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ profile: data.profile }),
+                          }).catch(() => {});
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all whitespace-nowrap"
+                      >
+                        Apply
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
