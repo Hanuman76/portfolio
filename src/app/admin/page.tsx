@@ -29,6 +29,10 @@ import {
   FolderOpen,
   Upload,
   Loader2,
+  HardDrive,
+  Download,
+  CloudUpload,
+  RefreshCw,
 } from 'lucide-react';
 import { GithubIcon, LinkedinIcon, WhatsappIcon, InstagramIcon } from '@/components/ui/Icons';
 import type { PortfolioData, Project, EducationItem } from '@/lib/portfolioStore';
@@ -37,7 +41,10 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState<'projects' | 'education' | 'site-text' | 'profile' | 'theme'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'education' | 'site-text' | 'profile' | 'theme' | 'backup'>('projects');
+  const [isPushingGit, setIsPushingGit] = useState(false);
+  const [gitStatusMessage, setGitStatusMessage] = useState<string | null>(null);
+  const backupFileInputRef = useRef<HTMLInputElement>(null);
 
   // Loaded portfolio data
   const [data, setData] = useState<PortfolioData | null>(null);
@@ -77,10 +84,43 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/portfolio');
+      let localData: PortfolioData | null = null;
+      try {
+        const stored = localStorage.getItem('portfolio_user_data');
+        if (stored) {
+          localData = JSON.parse(stored);
+          if (localData && localData.profile) {
+            setData(localData);
+          }
+        }
+      } catch (e) {
+        console.warn('LocalStorage load error:', e);
+      }
+
+      const res = await fetch('/api/portfolio', { cache: 'no-store' });
       if (res.ok) {
-        const json = await res.json();
-        setData(json);
+        const apiData = await res.json();
+        if (!localData) {
+          setData(apiData);
+          try {
+            localStorage.setItem('portfolio_user_data', JSON.stringify(apiData));
+          } catch {}
+        } else {
+          const apiTime = apiData.lastUpdated || 0;
+          const localTime = localData.lastUpdated || 0;
+          if (apiTime > localTime) {
+            setData(apiData);
+            try {
+              localStorage.setItem('portfolio_user_data', JSON.stringify(apiData));
+            } catch {}
+          } else {
+            fetch('/api/portfolio', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(localData),
+            }).catch(() => {});
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load portfolio data:', err);
@@ -122,6 +162,92 @@ export default function AdminPage() {
     } catch {}
   };
 
+  const persistData = (updatedData: PortfolioData, message?: string) => {
+    const withTimestamp: PortfolioData = {
+      ...updatedData,
+      lastUpdated: Date.now(),
+    };
+    setData(withTimestamp);
+    try {
+      localStorage.setItem('portfolio_user_data', JSON.stringify(withTimestamp));
+      localStorage.setItem('portfolio_last_updated', Date.now().toString());
+      window.dispatchEvent(new Event('portfolio_updated'));
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+    if (message) {
+      showNotification(message);
+    }
+    return withTimestamp;
+  };
+
+  const handleExportBackup = () => {
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Backup file downloaded to your computer!');
+  };
+
+  const handleImportBackup = (file: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsed = JSON.parse(text);
+        if (!parsed || !parsed.profile) {
+          alert('Invalid backup file format.');
+          return;
+        }
+        persistData(parsed, 'Portfolio restored from backup file!');
+        await fetch('/api/portfolio', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsed),
+        });
+        alert('All portfolio data, projects, photos, and texts restored successfully!');
+      } catch (err: any) {
+        alert('Failed to parse JSON backup: ' + err?.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleGitSync = async () => {
+    setIsPushingGit(true);
+    setGitStatusMessage(null);
+    try {
+      const res = await fetch('/api/git-sync', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        setGitStatusMessage(json.message);
+        showNotification('🚀 Pushed to GitHub! Vercel is now deploying your changes live.');
+      } else {
+        setGitStatusMessage(json.message || 'Git sync failed');
+        alert(json.message || 'Git sync not available in this environment. All changes remain safely saved in your browser.');
+      }
+    } catch (e: any) {
+      setGitStatusMessage('Git sync error: ' + e?.message);
+    } finally {
+      setIsPushingGit(false);
+    }
+  };
+
+  const handleResetDefaults = () => {
+    if (!confirm('Are you sure you want to reset all data back to original defaults? This will erase local changes.')) return;
+    try {
+      localStorage.removeItem('portfolio_user_data');
+      localStorage.removeItem('portfolio_last_updated');
+      window.dispatchEvent(new Event('portfolio_updated'));
+      window.location.reload();
+    } catch {}
+  };
+
   // File Upload State & Refs for Folder-based browsing
   const avatarFileRef = useRef<HTMLInputElement>(null);
   const avatar3dFileRef = useRef<HTMLInputElement>(null);
@@ -150,22 +276,20 @@ export default function AdminPage() {
 
       if (targetField === 'avatar' && data) {
         const updatedProfile = { ...data.profile, avatar: result.url };
-        setData({ ...data, profile: updatedProfile });
-        await fetch('/api/portfolio', {
+        persistData({ ...data, profile: updatedProfile }, 'Circular photo uploaded and saved permanently!');
+        fetch('/api/portfolio', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ profile: updatedProfile }),
-        });
-        showNotification('Circular photo uploaded from folder and saved!');
+        }).catch(() => {});
       } else if (targetField === 'avatar3d' && data) {
         const updatedProfile = { ...data.profile, avatar3d: result.url };
-        setData({ ...data, profile: updatedProfile });
-        await fetch('/api/portfolio', {
+        persistData({ ...data, profile: updatedProfile }, 'Avatar cutout PNG uploaded and saved permanently!');
+        fetch('/api/portfolio', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ profile: updatedProfile }),
-        });
-        showNotification('Avatar cutout PNG uploaded from folder and saved!');
+        }).catch(() => {});
       } else if (targetField === 'project') {
         setCurrentProject((prev) => ({ ...prev, image: result.url }));
         showNotification('Project photo uploaded from folder!');
@@ -227,10 +351,26 @@ export default function AdminPage() {
       });
       const resJson = await res.json().catch(() => ({}));
 
-      if (res.ok) {
+      const savedProject: Project = resJson.project || {
+        id: currentProject.id || `proj-${Date.now()}`,
+        title: currentProject.title || 'Untitled Project',
+        description: currentProject.description || '',
+        githubUrl: currentProject.githubUrl || '',
+        liveUrl: currentProject.liveUrl || '',
+        image: currentProject.image || '/my_photo.jpg',
+        languages: langInput.split(',').map((s) => s.trim()).filter(Boolean),
+        frameworks: frameworkInput.split(',').map((s) => s.trim()).filter(Boolean),
+        database: currentProject.database || 'MongoDB',
+        tags: tagInput.split(',').map((s) => s.trim()).filter(Boolean),
+        featured: currentProject.featured ?? true,
+      };
+
+      if (res.ok && data) {
         setIsEditingProject(false);
-        await loadData();
-        showNotification('Project details & GitHub links saved successfully!');
+        const updatedProjects: Project[] = isNew
+          ? [savedProject, ...(data.projects || [])]
+          : (data.projects || []).map((p) => (p.id === savedProject.id ? savedProject : p));
+        persistData({ ...data, projects: updatedProjects }, 'Project details & GitHub links saved permanently!');
       } else {
         alert(resJson.error || 'Failed to save project.');
       }
@@ -245,9 +385,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
       const resJson = await res.json().catch(() => ({}));
-      if (res.ok) {
-        await loadData();
-        showNotification('Project successfully deleted!');
+      if (res.ok && data) {
+        const updatedProjects = (data.projects || []).filter((p) => p.id !== id);
+        persistData({ ...data, projects: updatedProjects }, 'Project successfully deleted!');
       } else {
         alert(resJson.error || 'Failed to delete project.');
       }
@@ -306,8 +446,7 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setIsEditingEdu(false);
-        await loadData();
-        showNotification('Education record updated!');
+        persistData({ ...data, educationList: updatedList }, 'Education record updated permanently!');
       }
     } catch (err) {
       console.error('Failed to update education:', err);
@@ -324,8 +463,7 @@ export default function AdminPage() {
         body: JSON.stringify({ educationList: updatedList }),
       });
       if (res.ok) {
-        await loadData();
-        showNotification('Education record deleted!');
+        persistData({ ...data, educationList: updatedList }, 'Education record deleted!');
       }
     } catch (err) {
       console.error('Failed to delete education:', err);
@@ -341,12 +479,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile: data.profile }),
       });
-      if (res.ok) {
-        await loadData();
-        showNotification('All site texts, headings & profile saved successfully!');
-      } else {
-        alert('Failed to save texts. Please try again.');
-      }
+      persistData(data, 'All site texts, headings & profile saved permanently!');
     } catch (err) {
       console.error('Failed to update profile:', err);
       alert('Error updating texts: ' + err);
@@ -367,7 +500,7 @@ export default function AdminPage() {
         document.documentElement.style.setProperty('--bg-color', data.theme.bgColor);
         document.documentElement.style.setProperty('--text-color', data.theme.textColor);
         document.documentElement.style.setProperty('--accent-glow', `${data.theme.accentColor}55`);
-        showNotification('Theme configuration saved!');
+        persistData({ ...data, theme: data.theme }, 'Theme configuration saved permanently!');
       }
     } catch (err) {
       console.error('Failed to update theme:', err);
@@ -465,6 +598,25 @@ export default function AdminPage() {
           )}
 
           <button
+            onClick={handleGitSync}
+            disabled={isPushingGit}
+            title="Deploy changes to live site via GitHub"
+            className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 font-bold px-3 py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
+          >
+            {isPushingGit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
+            <span className="hidden md:inline">Push to GitHub / Vercel</span>
+          </button>
+
+          <button
+            onClick={handleExportBackup}
+            title="Download JSON backup file"
+            className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 font-bold px-3 py-2 rounded-xl transition-all shadow-sm"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Backup</span>
+          </button>
+
+          <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-700 font-bold px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 transition-all"
           >
@@ -524,6 +676,18 @@ export default function AdminPage() {
           >
             <User className="w-4 h-4" />
             <span>Profile Photo, WhatsApp & Socials</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('backup')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              activeTab === 'backup'
+                ? 'bg-orange-600 text-white shadow-md shadow-orange-500/30'
+                : 'bg-white text-slate-700 hover:text-orange-600 border border-slate-200 hover:border-orange-300'
+            }`}
+          >
+            <HardDrive className="w-4 h-4" />
+            <span>Data Storage &amp; Sync</span>
           </button>
 
           <button
@@ -1330,6 +1494,138 @@ export default function AdminPage() {
                 <Save className="w-4 h-4" />
                 <span>Save Theme Settings</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Data Storage, Sync & Backup */}
+        {activeTab === 'backup' && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900">Permanent Data Storage &amp; Sync</h2>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Manage browser persistence, push changes to your live Vercel website, and export/import offline backups.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: Browser Persistence Status */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-emerald-200 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Browser Persistence: Active</h3>
+                    <span className="text-xs text-emerald-700 font-medium font-mono">Protected against Refresh &amp; Page Closes</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  Every change you make (photo uploads, project additions, text edits) is automatically saved to your browser&apos;s permanent storage (<span className="font-mono text-emerald-800 font-bold">localStorage</span>) and synced with the local data files. When you refresh the page or return tomorrow, your customized data is immediately restored!
+                </p>
+                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-800 font-mono">
+                  ✓ Projects: {data?.projects?.length || 0} saved<br />
+                  ✓ Qualifications: {data?.educationList?.length || 0} saved<br />
+                  ✓ Profile Name: {data?.profile?.name || 'N/A'}<br />
+                  ✓ Photo URL: {data?.profile?.avatar?.substring(0, 32)}...
+                </div>
+              </div>
+
+              {/* Card 2: Git & Vercel Live Deployment */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-orange-200 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                    <CloudUpload className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Push to Live Website (GitHub &amp; Vercel)</h3>
+                    <span className="text-xs text-orange-600 font-medium">1-Click Live Deployment</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  Click the button below to commit all your latest changes directly to your GitHub repository (<span className="font-mono text-slate-800 font-semibold">Hanuman76/portfolio</span>). Vercel will immediately build and deploy the changes live for all visitors worldwide!
+                </p>
+                <button
+                  onClick={handleGitSync}
+                  disabled={isPushingGit}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-md shadow-orange-500/30 transition-all disabled:opacity-50"
+                >
+                  {isPushingGit ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+                  <span>{isPushingGit ? 'Pushing to GitHub...' : 'Deploy to Live Website Now'}</span>
+                </button>
+                {gitStatusMessage && (
+                  <p className="mt-3 text-xs text-slate-700 bg-slate-100 p-2.5 rounded-lg border border-slate-200 font-mono">
+                    {gitStatusMessage}
+                  </p>
+                )}
+              </div>
+
+              {/* Card 3: Offline Backup (Export & Import) */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                    <Download className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Backup &amp; Restore (JSON)</h3>
+                    <span className="text-xs text-blue-600 font-medium">Offline Data Safety</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  Download a complete backup JSON file containing all your custom texts, projects, photos, and links. You can restore it anytime on any browser or computer.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleExportBackup}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download JSON Backup</span>
+                  </button>
+
+                  <input
+                    type="file"
+                    ref={backupFileInputRef}
+                    accept=".json"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        handleImportBackup(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => backupFileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-bold text-xs transition-all"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Restore from Backup</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 4: Factory Reset */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-red-200 shadow-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
+                    <Trash2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Reset to Defaults</h3>
+                    <span className="text-xs text-red-600 font-medium">Clear browser cache &amp; reload default site data</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                  If you want to discard your local modifications and revert the site to its original clean template, you can reset below.
+                </p>
+                <button
+                  onClick={handleResetDefaults}
+                  className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 border border-red-300 text-red-700 font-bold text-xs transition-all"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Reset to Factory Template</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

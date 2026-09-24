@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getPortfolioData, savePortfolioData } from '@/lib/portfolioStore';
 
@@ -31,6 +31,12 @@ export async function PUT(request: Request) {
     }
     if (body.skills) {
       data.skills = body.skills;
+    }
+    if (body.projects) {
+      data.projects = body.projects;
+    }
+    if (body.theme) {
+      data.theme = { ...data.theme, ...body.theme };
     }
 
     savePortfolioData(data);

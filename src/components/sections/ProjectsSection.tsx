@@ -10,52 +10,54 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
   const [projectList, setProjectList] = useState<Project[]>(projects);
 
   useEffect(() => {
-    // Keep in sync with initial props
-    if (projects && projects.length > 0) {
+    // Keep in sync with parent props
+    if (Array.isArray(projects)) {
       setProjectList(projects);
     }
 
-    // Also fetch fresh projects from API
-    const fetchLatest = async () => {
+    const syncProjects = () => {
       try {
-        const res = await fetch('/api/projects', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setProjectList(data);
+        const stored = localStorage.getItem('portfolio_user_data');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && Array.isArray(parsed.projects)) {
+            setProjectList(parsed.projects);
+            return;
           }
         }
-      } catch (err) {
-        console.warn('Could not fetch latest projects:', err);
-      }
+      } catch {}
+
+      // Fallback fetch from API
+      fetch('/api/projects', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) setProjectList(data);
+        })
+        .catch(() => {});
     };
 
-    fetchLatest();
-
-    // Listen for real-time admin updates in same browser session
-    const handleStorageUpdate = () => fetchLatest();
-    window.addEventListener('storage', handleStorageUpdate);
-    window.addEventListener('portfolio_updated', handleStorageUpdate);
+    window.addEventListener('storage', syncProjects);
+    window.addEventListener('portfolio_updated', syncProjects);
 
     return () => {
-      window.removeEventListener('storage', handleStorageUpdate);
-      window.removeEventListener('portfolio_updated', handleStorageUpdate);
+      window.removeEventListener('storage', syncProjects);
+      window.removeEventListener('portfolio_updated', syncProjects);
     };
   }, [projects]);
 
   return (
     <section id="projects" className="py-24 bg-[#fdfdfd] relative z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Heading matching reel */}
-        <div className="flex flex-col items-start mb-14">
-          <span className="text-xs font-mono tracking-widest text-emerald-700 uppercase font-bold mb-2">
-            FEATURED WORK
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="text-xs font-mono font-bold tracking-widest text-emerald-800 uppercase px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+            Selected Works
           </span>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
-            Projects.
+          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+            Crafted with Precision.
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
-            Selected client web platforms and production software systems built with modern architectures.
+          <p className="mt-3 text-sm sm:text-base text-slate-600 font-normal">
+            Production-grade systems, full-stack applications, and interactive platforms.
           </p>
         </div>
 
@@ -77,7 +79,7 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
                 rel="noreferrer"
                 className="relative block w-full rounded-[38px] p-2 bg-slate-100 border-[2.5px] border-slate-300 hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-xl group-hover:scale-[1.01]"
               >
-                <div className="relative h-64 sm:h-72 w-full rounded-[30px] overflow-hidden bg-slate-200">
+                <div className="relative aspect-[16/10] w-full rounded-[30px] overflow-hidden bg-slate-900 border border-slate-200">
                   <Image
                     src={project.image || '/project_fbv.jpg'}
                     alt={project.title}

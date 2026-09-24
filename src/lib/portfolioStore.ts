@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import path from 'path';
 import rawInitialData from '@/data/portfolio-data.json';
 
@@ -84,6 +84,7 @@ export interface PortfolioData {
   skills: Skill[];
   projects: Project[];
   theme: ThemeConfig;
+  lastUpdated?: number;
 }
 
 function sanitizeData(data: any): PortfolioData {
@@ -115,6 +116,9 @@ function sanitizeData(data: any): PortfolioData {
   if (!cloned.profile.instagram) {
     cloned.profile.instagram = 'https://instagram.com';
   }
+  if (!cloned.projects || !Array.isArray(cloned.projects)) {
+    cloned.projects = (rawInitialData as any).projects || [];
+  }
   return cloned as PortfolioData;
 }
 
@@ -123,57 +127,77 @@ export function getPortfolioData(): PortfolioData {
     return memoryCache;
   }
 
-  // 1. Try reading from writable serverless /tmp path first (if written during runtime)
+  let diskData: PortfolioData | null = null;
+  let diskMtime = 0;
+  let tmpData: PortfolioData | null = null;
+  let tmpMtime = 0;
+
+  // 1. Read bundled data from src/data/portfolio-data.json (Primary in local dev & persistent updates)
+  try {
+    if (fs.existsSync(bundledFilePath)) {
+      const stats = fs.statSync(bundledFilePath);
+      diskMtime = stats.mtimeMs;
+      const raw = fs.readFileSync(bundledFilePath, 'utf8');
+      diskData = sanitizeData(JSON.parse(raw));
+    }
+  } catch (e) {
+    console.warn('Could not read from bundledFilePath:', e);
+  }
+
+  // 2. Read from writable /tmp path (Used in serverless Vercel environments during runtime)
   try {
     if (fs.existsSync(tmpFilePath)) {
+      const stats = fs.statSync(tmpFilePath);
+      tmpMtime = stats.mtimeMs;
       const raw = fs.readFileSync(tmpFilePath, 'utf8');
-      const data = JSON.parse(raw);
-      memoryCache = sanitizeData(data);
-      return memoryCache;
+      tmpData = sanitizeData(JSON.parse(raw));
     }
   } catch (e) {
     console.warn('Could not read from tmpFilePath:', e);
   }
 
-  // 2. Try reading from bundled file path on disk (works locally)
-  try {
-    if (fs.existsSync(bundledFilePath)) {
-      const raw = fs.readFileSync(bundledFilePath, 'utf8');
-      const data = JSON.parse(raw);
-      memoryCache = sanitizeData(data);
-      try {
-        fs.writeFileSync(tmpFilePath, JSON.stringify(memoryCache, null, 2), 'utf8');
-      } catch {}
-      return memoryCache;
-    }
-  } catch {}
+  // Compare timestamps: if tmpData was updated after diskData (e.g. on serverless runtime), use it
+  if (diskData && tmpData) {
+    memoryCache = tmpMtime > diskMtime ? tmpData : diskData;
+    return memoryCache;
+  }
 
-  // 3. Fallback to imported data from module bundle (NEVER FAILS ON VERCEL)
+  if (diskData) {
+    memoryCache = diskData;
+    return memoryCache;
+  }
+
+  if (tmpData) {
+    memoryCache = tmpData;
+    return memoryCache;
+  }
+
+  // 3. Fallback to imported bundled data (NEVER FAILS)
   memoryCache = sanitizeData(rawInitialData);
   return memoryCache;
 }
 
 export function savePortfolioData(data: PortfolioData): void {
-  // Update in-memory cache immediately
-  memoryCache = data;
+  const sanitized = sanitizeData(data);
+  sanitized.lastUpdated = Date.now();
+  memoryCache = sanitized;
 
-  // 1. Write to writable serverless /tmp
+  // 1. Write to bundled path on disk (works locally and updates Git-tracked source file)
   try {
-    fs.writeFileSync(tmpFilePath, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(bundledFilePath, JSON.stringify(sanitized, null, 2), 'utf8');
+  } catch {
+    // Expected on Vercel serverless read-only filesystem
+  }
+
+  // 2. Write to writable serverless /tmp
+  try {
+    fs.writeFileSync(tmpFilePath, JSON.stringify(sanitized, null, 2), 'utf8');
   } catch (tmpErr) {
     console.warn('Could not write to tmpFilePath:', tmpErr);
   }
 
-  // 2. Try writing to bundled path (works locally, safely ignored on Vercel read-only filesystem)
-  try {
-    fs.writeFileSync(bundledFilePath, JSON.stringify(data, null, 2), 'utf8');
-  } catch {
-    // Expected on Vercel serverless read-only filesystem
-    console.log('Running on serverless/read-only environment. Data saved to /tmp and memory.');
-  }
-
-  // 3. Trigger GitHub sync if token is available
-  syncToGitHub(data).catch((e) => console.warn('Background GitHub sync:', e));
+  // 3. Trigger GitHub sync if GITHUB_TOKEN is configured
+  syncToGitHub(sanitized).catch((e) => console.warn('Background GitHub sync:', e));
 }
 
 async function syncToGitHub(data: PortfolioData) {
