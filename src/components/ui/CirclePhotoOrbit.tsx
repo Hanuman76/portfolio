@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import InteractiveFaceCanvas from '@/components/ui/InteractiveFaceCanvas';
 import { motion } from 'framer-motion';
 import { Phone, Sparkles, Orbit } from 'lucide-react';
 import { WhatsappIcon, InstagramIcon, LinkedinIcon } from '@/components/ui/Icons';
@@ -95,15 +96,8 @@ export default function CirclePhotoOrbit({ profile }: CirclePhotoOrbitProps) {
             boxShadow: '0 20px 45px rgba(234, 88, 12, 0.35)',
           }}
         >
-          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-inner bg-slate-100">
-            <Image
-              src={photoUrl}
-              alt={profile.name}
-              fill
-              priority
-              unoptimized
-              className="object-cover object-top hover:scale-105 transition-transform duration-500"
-            />
+          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-inner bg-slate-900">
+            <InteractiveFaceCanvas />
           </div>
 
           {/* Active Verified Badge */}
