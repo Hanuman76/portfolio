@@ -396,7 +396,7 @@ export default function PillarsCurtain() {
     }
 
     function resize() {
-      if (!container || !canvas) return;
+      if (!container || !canvas || !ctx) return;
       width = container.clientWidth || 460;
       height = container.clientHeight || 640;
 
@@ -512,6 +512,7 @@ export default function PillarsCurtain() {
 
     // Main animation loop
     function animate() {
+      if (!ctx) return;
       pointer.vx *= 0.75;
       pointer.vy *= 0.75;
 
