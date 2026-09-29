@@ -7,7 +7,7 @@ import type { Profile } from '@/lib/portfolioStore';
 
 export default function CodeAboutSection({ profile }: { profile: Profile }) {
   return (
-    <section id="about" className="py-24 bg-white relative z-10 overflow-hidden">
+    <section id="about" className="py-24 bg-transparent relative z-10 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
           {/* Left Column: The Dark Code Editor Card (Exact from Reel) */}
@@ -17,7 +17,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="relative p-1 rounded-3xl bg-gradient-to-tr from-emerald-500/20 via-green-500/10 to-transparent shadow-2xl"
+              className="relative p-1 rounded-3xl bg-gradient-to-tr from-red-500/30 via-blue-500/20 to-transparent shadow-2xl"
             >
               <div className="bg-[#12161f] text-slate-200 rounded-[22px] p-5 sm:p-6 font-mono text-xs sm:text-[13px] border border-slate-800 shadow-inner">
                 {/* Mac window traffic light dots */}
@@ -27,7 +27,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
                     <span className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
                     <span className="w-3 h-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <span className="text-[11px] text-slate-500 font-mono">devraj.config.ts</span>
+                  <span className="text-[11px] text-slate-500 font-mono">spidey.devraj.ts</span>
                 </div>
 
                 {/* Code Block with Syntax Highlighting */}
@@ -65,7 +65,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
                   </div>
                   <div className="pl-4">
                     <span className="text-[#7ee787]">vibe:</span>{' '}
-                    <span className="text-[#a5d6ff]">&apos;{profile.codeVibe ?? 'Clean code & Chai'}&apos;</span>,
+                    <span className="text-[#a5d6ff]">&apos;{profile.codeVibe ?? 'Spider-Sense & Clean Code'}&apos;</span>,
                   </div>
                   <div className="pl-4 text-slate-500 italic">
                     // Building digital playgrounds...
@@ -90,7 +90,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
                     <span className="truncate max-w-[240px]">
                       Now Playing:{' '}
                       <span className="text-slate-300">
-                        {profile.nowPlaying ?? 'Lofi Hip Hop Radio - Beats to relax/study to'}
+                        {profile.nowPlaying ?? 'Spider-Man: Across the Spider-Verse (Soundtrack)'}
                       </span>
                     </span>
                   </div>
@@ -114,7 +114,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
               transition={{ duration: 0.5 }}
               className="space-y-1"
             >
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
                 {profile.storyHeading ? (
                   <span className="whitespace-pre-line">{profile.storyHeading}</span>
                 ) : (
@@ -138,7 +138,7 @@ export default function CodeAboutSection({ profile }: { profile: Profile }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="mt-6 space-y-4 text-sm sm:text-base text-slate-600 leading-relaxed font-normal"
+              className="mt-6 space-y-4 text-sm sm:text-base text-slate-300 leading-relaxed font-normal"
             >
               {profile.storyP1 && (
                 <p>{profile.storyP1}</p>

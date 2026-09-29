@@ -46,30 +46,31 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
   }, [projects]);
 
   return (
-    <section id="projects" className="py-24 bg-[#fdfdfd] relative z-10">
+    <section id="projects" className="py-24 bg-transparent relative z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-mono font-bold tracking-widest text-emerald-800 uppercase px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+        <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ duration: 0.65, ease: [0.21, 1.02, 0.47, 0.98] }} className="text-center max-w-2xl mx-auto mb-16">
+          <span className="text-xs font-mono font-bold tracking-widest text-red-800 uppercase px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200">
             Selected Works
           </span>
-          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
             Crafted with Precision.
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-slate-600 font-normal">
+          <p className="mt-3 text-sm sm:text-base text-slate-300 font-normal">
             Production-grade systems, full-stack applications, and interactive platforms.
           </p>
-        </div>
+        </motion.div>
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-12 items-start">
           {projectList.map((project, idx) => (
             <motion.div
               key={project.id || idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              initial={{ opacity: 0, y: 90, scale: 0.93 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.75, delay: idx * 0.15, ease: [0.21, 1.02, 0.47, 0.98] }}
+              whileHover={{ y: -12, transition: { duration: 0.25 } }}
               className="flex flex-col group cursor-pointer"
             >
               {/* Project Image Card */}
@@ -77,7 +78,7 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
                 href={project.liveUrl || project.githubUrl || '#'}
                 target="_blank"
                 rel="noreferrer"
-                className="relative block w-full rounded-[38px] p-2 bg-slate-100 border-[2.5px] border-slate-300 hover:border-slate-500 transition-all duration-300 shadow-sm hover:shadow-xl group-hover:scale-[1.01]"
+                className="relative block w-full rounded-[38px] p-2 bg-slate-900/90 border-[2.5px] border-slate-800 hover:border-red-500/70 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-red-500/20 backdrop-blur-md"
               >
                 <div className="relative aspect-[16/10] w-full rounded-[30px] overflow-hidden bg-slate-900 border border-slate-200">
                   <Image
@@ -90,7 +91,7 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
 
                   {/* Circular Center Hover Arrow Button */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-12 h-12 rounded-full bg-white/95 text-slate-900 shadow-2xl border border-slate-200 flex items-center justify-center opacity-85 group-hover:opacity-100 group-hover:scale-115 transition-all">
+                    <div className="w-12 h-12 rounded-full bg-transparent/95 text-white shadow-2xl border border-slate-200 flex items-center justify-center opacity-85 group-hover:opacity-100 group-hover:scale-115 transition-all">
                       <ArrowUpRight className="w-5 h-5 stroke-[2.5]" />
                     </div>
                   </div>
@@ -100,17 +101,17 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
               {/* Title & Metadata */}
               <div className="mt-5 flex flex-col">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight group-hover:text-red-700 transition-colors">
                     {project.title}
                   </h3>
                   {project.database && (
-                    <span className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 shrink-0">
+                    <span className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-slate-700 shrink-0">
                       {project.database}
                     </span>
                   )}
                 </div>
 
-                <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                <p className="mt-2 text-sm text-slate-300 line-clamp-2 leading-relaxed">
                   {project.description}
                 </p>
 
@@ -119,7 +120,7 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
                   {(project.languages || []).map((lang, lIdx) => (
                     <span
                       key={lIdx}
-                      className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-lg bg-red-50 text-red-800 border border-red-200"
                     >
                       {lang}
                     </span>
@@ -141,7 +142,7 @@ export default function ProjectsSection({ projects = [] }: { projects: Project[]
                       href={project.liveUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-emerald-700 hover:text-emerald-900 underline flex items-center gap-1"
+                      className="text-red-700 hover:text-emerald-900 underline flex items-center gap-1"
                     >
                       <span>Live Preview</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />

@@ -31,13 +31,13 @@ export default function Navbar({ profile }: { profile?: Profile }) {
       <div
         className={`pointer-events-auto flex items-center justify-between w-full max-w-4xl rounded-full px-5 py-2 transition-all duration-300 ${
           scrolled
-            ? 'bg-white/90 shadow-lg border border-slate-200/80 backdrop-blur-xl'
-            : 'bg-white/80 border border-slate-200/60 shadow-sm backdrop-blur-md'
+            ? 'bg-slate-950/85 shadow-2xl border border-red-500/30 backdrop-blur-xl shadow-red-950/30'
+            : 'bg-slate-900/75 border border-slate-800/80 shadow-lg backdrop-blur-md'
         }`}
       >
         {/* Left: Avatar with green ring + Name */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-emerald-500 ring-offset-2 ring-offset-white shadow-sm">
+          <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-red-600 ring-offset-2 ring-offset-slate-950 shadow-sm">
             <Image
               src={profile?.avatar || '/my_photo.jpg'}
               alt={profile?.name || 'Profile Avatar'}
@@ -46,9 +46,9 @@ export default function Navbar({ profile }: { profile?: Profile }) {
               className="object-cover"
             />
           </div>
-          <span className="font-bold text-sm text-slate-900 tracking-tight flex items-center gap-1.5 group-hover:text-emerald-600 transition-colors">
+          <span className="font-bold text-sm text-white tracking-tight flex items-center gap-1.5 group-hover:text-red-600 transition-colors">
             {profile?.name || 'Devraj Ancheriya'}
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-red-950/60 text-red-300 border-red-500/40 font-bold border border-red-200">
               MCA
             </span>
           </span>
@@ -60,7 +60,7 @@ export default function Navbar({ profile }: { profile?: Profile }) {
             <a
               key={link.name}
               href={link.href}
-              className="text-xs font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+              className="text-xs font-semibold text-slate-300 hover:text-red-600 transition-colors"
             >
               {link.name}
             </a>
@@ -70,10 +70,10 @@ export default function Navbar({ profile }: { profile?: Profile }) {
         {/* Right: Available Status Badge & Admin Portal Button */}
         <div className="flex items-center gap-2.5">
           {/* Status Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-mono font-bold text-emerald-700">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-[11px] font-mono font-bold text-emerald-700">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
             </span>
             <span>Available</span>
           </div>
@@ -112,7 +112,7 @@ export default function Navbar({ profile }: { profile?: Profile }) {
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-slate-800 hover:text-emerald-600 py-1.5 transition-colors"
+                className="text-sm font-semibold text-slate-800 hover:text-red-600 py-1.5 transition-colors"
               >
                 {link.name}
               </a>

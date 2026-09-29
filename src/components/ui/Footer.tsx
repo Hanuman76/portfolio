@@ -20,7 +20,7 @@ export default function Footer({ profile }: { profile: Profile }) {
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
           <span className="font-black text-lg tracking-tight text-white flex items-center gap-2">
             {profile.name.toUpperCase()}
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/10 border border-emerald-500/30 text-red-400 font-bold">
               MCA
             </span>
           </span>
@@ -36,7 +36,7 @@ export default function Footer({ profile }: { profile: Profile }) {
             href={`https://wa.me/${whatsappCleanNumber}`}
             target="_blank"
             rel="noreferrer"
-            className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 hover:border-emerald-500 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-all hover:scale-110"
+            className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 hover:border-red-500 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all hover:scale-110"
             title="WhatsApp"
           >
             <WhatsappIcon className="w-4 h-4" />
@@ -78,7 +78,7 @@ export default function Footer({ profile }: { profile: Profile }) {
           {/* Scroll To Top */}
           <button
             onClick={scrollToTop}
-            className="w-9 h-9 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center transition-all hover:scale-110 ml-2"
+            className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-500 text-slate-950 flex items-center justify-center transition-all hover:scale-110 ml-2"
             title="Scroll to top"
           >
             <ArrowUp className="w-4 h-4 stroke-[2.5]" />
@@ -89,7 +89,7 @@ export default function Footer({ profile }: { profile: Profile }) {
         <div className="flex flex-col items-center md:items-end text-center md:text-right text-xs text-slate-500 font-mono gap-1.5">
           <Link
             href="/admin"
-            className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 font-semibold"
+            className="text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1 font-semibold"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             <span>Admin Control Panel</span>

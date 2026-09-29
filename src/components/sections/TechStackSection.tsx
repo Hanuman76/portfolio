@@ -30,20 +30,20 @@ export default function TechStackSection({ skills = [] }: { skills?: Skill[] }) 
   ];
 
   return (
-    <section id="tech" className="py-20 bg-white relative z-10 border-t border-slate-200/60">
+    <section id="tech" className="py-20 bg-transparent relative z-10 border-t border-slate-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-start mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono font-bold text-emerald-800 mb-3">
-            <Terminal className="w-3.5 h-3.5 text-emerald-600" />
+        <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ duration: 0.65, ease: [0.21, 1.02, 0.47, 0.98] }} className="flex flex-col items-start mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-xs font-mono font-bold text-red-800 mb-3">
+            <Terminal className="w-3.5 h-3.5 text-red-600" />
             <span>TOOLING & CAPABILITIES</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
             Tech Stack.
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-slate-600 max-w-xl">
+          <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-xl">
             Practical full-stack competencies applied in building production web applications and academic software systems.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {techCategories.map((cat, idx) => {
@@ -51,18 +51,22 @@ export default function TechStackSection({ skills = [] }: { skills?: Skill[] }) 
             return (
               <motion.div
                 key={idx}
-                whileHover={{ y: -4 }}
-                className="bg-[#fafafa] rounded-3xl p-6 border border-slate-200 hover:border-emerald-400 transition-all shadow-xs hover:shadow-md"
+                initial={{ opacity: 0, y: 85, scale: 0.92 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.7, delay: idx * 0.12, ease: [0.21, 1.02, 0.47, 0.98] }}
+                whileHover={{ y: -10, scale: 1.02, transition: { duration: 0.25 } }}
+                className="bg-slate-900/85 backdrop-blur-md rounded-3xl p-6 border border-slate-800 hover:border-red-500/60 transition-all shadow-xl hover:shadow-2xl hover:shadow-red-500/20"
               >
-                <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-emerald-600 mb-4 shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-red-950/40 border border-red-500/40 flex items-center justify-center text-red-400 mb-4 shadow-md shadow-red-950/30">
                   <IconComp className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-base mb-3">{cat.name}</h3>
+                <h3 className="font-bold text-white text-base mb-3">{cat.name}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {cat.items.map((tech, tIdx) => (
                     <span
                       key={tIdx}
-                      className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-mono font-medium shadow-xs"
+                      className="px-2.5 py-1 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-200 hover:border-red-500/40 hover:text-red-300 text-xs font-mono font-medium transition-colors"
                     >
                       {tech}
                     </span>

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import SpiderWebBackground from '@/components/ui/SpiderWebBackground';
+import WebShooterOverlay from '@/components/ui/WebShooterOverlay';
 import Navbar from '@/components/ui/Navbar';
 import HeroSection from '@/components/sections/HeroSection';
 import CodeAboutSection from '@/components/sections/CodeAboutSection';
@@ -87,9 +89,15 @@ export default function HomeClient({ initialData }: { initialData: PortfolioData
   }, [initialData]);
 
   return (
-    <div className="relative min-h-screen selection:bg-emerald-500 selection:text-white bg-[#fdfdfd]">
+    <div className="relative min-h-screen selection:bg-red-600 selection:text-white bg-[#070a13] text-slate-100">
       {/* Cyber Initial Loading Screen */}
       <LoadingScreen />
+
+      {/* Interactive Dynamic Spider-Web Network Background */}
+      <SpiderWebBackground />
+
+      {/* Interactive Web-Shooter (THWIP & Elastic Pull on Click) */}
+      <WebShooterOverlay />
 
       {/* Floating Pill Dock Header */}
       <Navbar profile={data.profile} />

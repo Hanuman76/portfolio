@@ -25,18 +25,18 @@ export default function AboutSection({
   });
 
   return (
-    <section id="education" className="py-24 bg-[#f8fafc] relative z-10 border-t border-slate-200/60">
+    <section id="education" className="py-24 bg-transparent relative z-10 border-t border-slate-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
-        <div className="flex flex-col items-start mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono font-bold text-emerald-800 mb-3">
-            <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+        <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ duration: 0.65, ease: [0.21, 1.02, 0.47, 0.98] }} className="flex flex-col items-start mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-xs font-mono font-bold text-red-800 mb-3">
+            <GraduationCap className="w-3.5 h-3.5 text-red-600" />
             <span>ACADEMIC FOUNDATION</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
             Education: School, BCA &amp; MCA.
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-slate-600 max-w-xl">
+          <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-xl">
             Verified academic qualifications in Computer Applications and software engineering foundations.
           </p>
 
@@ -49,14 +49,14 @@ export default function AboutSection({
                 className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
                   selectedFilter === opt
                     ? 'bg-slate-900 text-white shadow-md'
-                    : 'bg-white text-slate-700 hover:text-emerald-600 border border-slate-200 shadow-sm'
+                    : 'bg-transparent text-slate-200 hover:text-red-600 border border-slate-200 shadow-sm'
                 }`}
               >
                 {opt}
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Education Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -65,11 +65,15 @@ export default function AboutSection({
             return (
               <motion.div
                 key={edu.id || index}
-                whileHover={{ y: -6 }}
-                className={`bg-white rounded-3xl p-6 sm:p-7 border h-full flex flex-col justify-between transition-all shadow-sm hover:shadow-xl ${
+                initial={{ opacity: 0, y: 85, scale: 0.93 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.7, delay: index * 0.12, ease: [0.21, 1.02, 0.47, 0.98] }}
+                whileHover={{ y: -10, scale: 1.02, transition: { duration: 0.25 } }}
+                className={`bg-slate-900/85 backdrop-blur-md rounded-3xl p-6 sm:p-7 border h-full flex flex-col justify-between transition-all shadow-xl hover:shadow-2xl ${
                   isPostGrad
-                    ? 'border-emerald-400 ring-2 ring-emerald-400/20'
-                    : 'border-slate-200 hover:border-slate-400'
+                    ? 'border-red-500/70 ring-2 ring-red-500/30 shadow-red-500/20'
+                    : 'border-slate-800 hover:border-red-500/50 hover:shadow-red-500/10'
                 }`}
               >
                 <div>
@@ -78,32 +82,32 @@ export default function AboutSection({
                     <span
                       className={`text-xs font-mono font-bold px-3 py-1 rounded-full ${
                         isPostGrad
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-slate-100 text-slate-700'
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-slate-900/80 text-slate-200'
                       }`}
                     >
                       {edu.level}
                     </span>
 
                     <span className="text-xs font-mono text-slate-500 flex items-center gap-1 font-semibold">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                      <Calendar className="w-3.5 h-3.5 text-red-600" />
                       <span>{edu.year}</span>
                     </span>
                   </div>
 
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors leading-snug">
+                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-red-600 transition-colors leading-snug">
                     {edu.degree}
                   </h3>
 
-                  <div className="mt-2 text-xs text-slate-600 flex items-center gap-1.5 font-medium">
-                    <Award className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div className="mt-2 text-xs text-slate-300 flex items-center gap-1.5 font-medium">
+                    <Award className="w-4 h-4 text-red-600 shrink-0" />
                     <span>{edu.institution}</span>
                   </div>
 
                   {/* Performance / Grade */}
                   <div className="mt-4 p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-mono">Performance:</span>
-                    <span className="font-bold text-emerald-700 font-mono">{edu.score}</span>
+                    <span className="font-bold text-red-700 font-mono">{edu.score}</span>
                   </div>
 
                   {/* Curriculum Highlights */}
@@ -113,8 +117,8 @@ export default function AboutSection({
                         Curriculum:
                       </span>
                       {edu.highlights.map((h, hIdx) => (
-                        <div key={hIdx} className="flex items-start gap-1.5 text-xs text-slate-600">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div key={hIdx} className="flex items-start gap-1.5 text-xs text-slate-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
                           <span>{h}</span>
                         </div>
                       ))}
@@ -124,7 +128,7 @@ export default function AboutSection({
 
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <span>ACADEMIC RECORD</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-1">
+                  <span className="text-red-600 font-bold flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     <span>Verified</span>
                   </span>
